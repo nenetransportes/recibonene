@@ -1,0 +1,23 @@
+{
+  "name": "0018---recibo-nene",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nenetransportes/recibonene.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/nenetransportes/recibonene/issues"
+  },
+  "homepage": "https://github.com/nenetransportes/recibonene#readme",
+  "dependencies": {
+    "pg": "^8.21.0"
+  }
+}
