@@ -9,9 +9,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -362,47 +359,24 @@
 
 <footer>Nene Transportes Cinematográfico &mdash; Sistema de Recibos</footer>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     CONFIGURAÇÃO SUPABASE
-     Preencha SUPABASE_URL e SUPABASE_ANON_KEY abaixo.
-     Encontre a anon key em: Supabase Dashboard → Project Settings → API
-  ═══════════════════════════════════════════════════════════════ -->
 <script>
-  const SUPABASE_URL      = 'https://iroovzuhrqggcjwoougd.supabase.co';
-  const SUPABASE_ANON_KEY = 'COLE_SUA_ANON_KEY_AQUI'; // ← único campo a preencher
-
-  // ─────────────────────────────────────────────────────────────
-  const { createClient } = supabase;
-  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
   // ── Estado global ────────────────────────────────────────────
   let proximoNumero = 752; // fallback local
 
   // ── Inicialização ────────────────────────────────────────────
   async function init() {
-    // Data de hoje como padrão
     document.getElementById('dataEmissao').valueAsDate = new Date();
-
-    // Busca o próximo número no Supabase
     await carregarProximoNumero();
-
-    // Primeira linha de item
     addItem();
   }
 
   async function carregarProximoNumero() {
     try {
-      const { data, error } = await sb
-        .from('recibos')
-        .select('numero')
-        .order('numero', { ascending: false })
-        .limit(1);
-
-      if (!error && data && data.length > 0) {
-        proximoNumero = data[0].numero + 1;
-      }
+      const r = await fetch('/.netlify/functions/proximo-numero');
+      const json = await r.json();
+      if (json.numero) proximoNumero = json.numero;
     } catch(e) {
-      console.warn('Supabase não configurado, usando numeração local.', e);
+      console.warn('Usando numeração local (fallback):', e);
     }
     document.getElementById('exibeNumero').textContent = proximoNumero;
   }
@@ -530,21 +504,13 @@
   });
 
   async function salvarNoSupabase(d) {
-    const { error } = await sb.from('recibos').insert({
-      numero:       d.numero,
-      nome_firma:   d.nomeFirma,
-      endereco:     d.endereco,
-      municipio:    d.municipio,
-      estado:       d.estado,
-      insc_mun:     d.inscMun,
-      cnpj:         d.cnpj,
-      insc_est:     d.inscEst,
-      nat_operacao: d.natOperacao,
-      data_emissao: d.dataEmissao,
-      itens:        d.itens,
-      total:        d.total,
+    const r = await fetch('/.netlify/functions/salvar-recibo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(d),
     });
-    if (error) throw error;
+    const json = await r.json();
+    if (!r.ok) throw new Error(json.error || 'Erro ao salvar');
   }
 
   // ── Renderizar PDF ───────────────────────────────────────────
