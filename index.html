@@ -519,199 +519,239 @@
     const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
     const W = 210, H = 297;
-    const ml = 12, mr = 12;
-    const cw = W - ml - mr;
+    const PL = 14, PR = 14;
+    const CW = W - PL - PR;
 
-    // ── helpers de cor ──
-    const preto  = () => doc.setTextColor(0, 0, 0);
-    const cinza  = () => doc.setTextColor(100, 100, 100);
-    const vermelho = () => doc.setTextColor(192, 57, 43);
+    // Paleta de cores
+    const AZUL     = [0, 51, 153];
+    const AZUL_BG  = [240, 244, 255];
+    const CINZA    = [110, 110, 110];
+    const CINZA_L  = [220, 220, 220];
+    const PRETO    = [20, 20, 20];
+    const BRANCO   = [255, 255, 255];
+    const VERMELHO = [196, 30, 30];
+    const HEADER_BG= [248, 249, 252];
 
-    // ── borda geral ──
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.6);
-    doc.rect(ml - 2, 10, cw + 4, 275);
+    // ── Borda geral azul ──
+    doc.setDrawColor(...AZUL);
+    doc.setLineWidth(0.8);
+    doc.rect(PL - 3, 8, CW + 6, 281);
 
-    // ── caixa da logo ──
-    doc.setLineWidth(0.4);
-    doc.rect(ml - 2, 10, 46, 28);
-    // logo proporção 250x104px (ratio 2.404): largura=42mm, altura=42/2.404=17.5mm, centralizada na caixa 28mm
-    const logoH = 42 / 2.404;
-    const logoY = 10 + (28 - logoH) / 2;
-    doc.addImage(LOGO_B64, 'PNG', ml, logoY, 42, logoH);
+    // ── Fundo do header ──
+    doc.setFillColor(...HEADER_BG);
+    doc.setDrawColor(...HEADER_BG);
+    doc.rect(PL - 3, 8, CW + 6, 32, 'F');
 
-    // ── dados da empresa (centralizados na metade direita do cabeçalho) ──
-    const empX = ml + 44 + (W - mr - ml - 44) / 2; // centro da área direita
-    preto();
+    // ── Logo (proporção 250x104 = 2.404:1) ──
+    const LOGO_W = 42, LOGO_H = 42 / 2.404;
+    const LOGO_X = PL + 1;
+    const LOGO_Y = 8 + (32 - LOGO_H) / 2;
+    doc.addImage(LOGO_B64, 'PNG', LOGO_X, LOGO_Y, LOGO_W, LOGO_H);
+
+    // ── Dados da empresa (centralizados na área direita) ──
+    const EMP_START = PL + LOGO_W + 6;
+    const EMP_CX    = EMP_START + (W - PR - EMP_START) / 2;
+
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10.5);
-    doc.text('Rogério Lopes Espíndola e Cia Ltda.', empX, 17.5, { align: 'center' });
+    doc.setFontSize(11);
+    doc.setTextColor(20, 20, 20);
+    doc.text('Rogerio Lopes Espindola e Cia Ltda.', EMP_CX, 19, { align: 'center' });
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
-    preto();
-    doc.text('Rua Carlos Estevão, 333/105 – Jardim Leopoldina', empX, 22.5, { align: 'center' });
-    doc.text('Porto Alegre – RS – CEP 91240-001', empX, 27, { align: 'center' });
-    doc.text('Fone: (51) 99823.8670  |  nene_poa@hotmail.com', empX, 31.5, { align: 'center' });
+    doc.setTextColor(110, 110, 110);
+    doc.text('Rua Carlos Estevao, 333/105 - Jardim Leopoldina', EMP_CX, 24, { align: 'center' });
 
-    // ── linha separadora ──
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.3);
-    doc.line(ml - 2, 38.5, W - mr + 2, 38.5);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(110, 110, 110);
+    doc.text('Porto Alegre - RS  |  CEP 91240-001', EMP_CX, 28.5, { align: 'center' });
 
-    // ── CNPJ e Insc Municipal ──
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8.5);
+    doc.setTextColor(110, 110, 110);
+    doc.text('(51) 99823.8670  |  nene_poa@hotmail.com', EMP_CX, 33, { align: 'center' });
+
+    // ── Linha separadora ──
+    doc.setDrawColor(0, 51, 153);
+    doc.setLineWidth(0.6);
+    doc.line(PL - 3, 40, W - PR + 3, 40);
+
+    // ── CNPJ / Insc. Municipal ──
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
-    preto();
-    doc.text('CNPJ (MF) Nº 18.541.800/0001-85', ml, 43.5);
-    doc.text('Insc. Municipal Nº 558.998.2.0', W - mr, 43.5, { align: 'right' });
+    doc.setTextColor(110, 110, 110);
+    doc.text('CNPJ (MF) No 18.541.800/0001-85', PL, 45.5);
 
-    doc.line(ml - 2, 46.5, W - mr + 2, 46.5);
-
-    // ── RECIBO Nº ──
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(24);
-    preto();
-    doc.text('RECIBO', W / 2 - 10, 56, { align: 'center' });
+    doc.setFontSize(7);
+    doc.setTextColor(110, 110, 110);
+    doc.text('Insc. Municipal No 558.998.2.0', W - PR, 45.5, { align: 'right' });
 
-    doc.setFontSize(13);
-    preto();
-    doc.text('Nº', W / 2 + 20, 56);
-
-    vermelho();
-    doc.setFontSize(24);
-    doc.text(String(d.numero), W / 2 + 32, 56);
-
-    preto();
+    doc.setDrawColor(220, 220, 220);
     doc.setLineWidth(0.3);
-    doc.line(ml - 2, 60, W - mr + 2, 60);
+    doc.line(PL - 3, 48, W - PR + 3, 48);
 
-    // ── campos ──
-    function campo(label, valor, x, w, y) {
+    // ── Faixa RECIBO ──
+    doc.setFillColor(240, 244, 255);
+    doc.setDrawColor(240, 244, 255);
+    doc.rect(PL - 3, 48, CW + 6, 18, 'F');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(26);
+    doc.setTextColor(20, 20, 20);
+    doc.text('RECIBO', W / 2 - 15, 61, { align: 'center' });
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(13);
+    doc.setTextColor(110, 110, 110);
+    doc.text('No', W / 2 + 16, 61);
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(26);
+    doc.setTextColor(196, 30, 30);
+    doc.text(String(d.numero), W / 2 + 26, 61);
+
+    doc.setDrawColor(0, 51, 153);
+    doc.setLineWidth(0.5);
+    doc.line(PL - 3, 66, W - PR + 3, 66);
+
+    // ── Campos ──
+    function campo(label, valor, x, largura, y) {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(6.5);
-      cinza();
+      doc.setTextColor(0, 51, 153);
       doc.text(label, x, y);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(10);
-      preto();
-      doc.text((valor || ''), x, y + 5);
+      doc.setTextColor(20, 20, 20);
+      doc.text(valor || '', x, y + 5.5);
 
-      doc.setDrawColor(180, 180, 180);
-      doc.setLineWidth(0.2);
-      doc.line(x, y + 6.5, x + w, y + 6.5);
-      doc.setDrawColor(0, 0, 0);
+      doc.setDrawColor(220, 220, 220);
+      doc.setLineWidth(0.25);
+      doc.line(x, y + 7, x + largura, y + 7);
     }
 
-    let y = 67;
-    const gap = 13;
+    let Y = 73;
+    const GAP = 13;
 
-    // Nome ou Firma
-    campo('NOME OU FIRMA', (d.nomeFirma || '').toUpperCase(), ml, cw, y);
-    y += gap;
+    campo('NOME OU FIRMA', (d.nomeFirma || '').toUpperCase(), PL, CW, Y);
+    Y += GAP;
 
-    // Endereço
-    campo('ENDEREÇO', (d.endereco || '').toUpperCase(), ml, cw, y);
-    y += gap;
+    campo('ENDERECO', (d.endereco || '').toUpperCase(), PL, CW, Y);
+    Y += GAP;
 
-    // Município | Estado | Insc. Mun.
-    const w1 = cw * 0.50, w2 = 20, w3 = cw - w1 - w2 - 10;
-    campo('MUNICÍPIO',  (d.municipio || '').toUpperCase(), ml, w1 - 4, y);
-    campo('ESTADO',     (d.estado || '').toUpperCase(), ml + w1, w2, y);
-    campo('INSC. MUN.', d.inscMun || '', ml + w1 + w2 + 6, w3, y);
-    y += gap;
+    const C1 = CW * 0.52, C2 = 24;
+    const C3 = CW - C1 - C2 - 12;
+    campo('MUNICIPIO',  (d.municipio || '').toUpperCase(), PL, C1 - 4, Y);
+    campo('ESTADO',     (d.estado || '').toUpperCase(),    PL + C1, C2, Y);
+    campo('INSC. MUN.', d.inscMun || '',                   PL + C1 + C2 + 6, C3, Y);
+    Y += GAP;
 
-    // CNPJ | Insc. Est.
-    campo('CNPJ / CPF', d.cnpj || '', ml, cw * 0.5 - 4, y);
-    campo('INSC. EST.', d.inscEst || '', ml + cw * 0.5 + 2, cw * 0.5 - 4, y);
-    y += gap;
+    campo('CNPJ / CPF', d.cnpj || '',    PL, CW * 0.48, Y);
+    campo('INSC. EST.', d.inscEst || '', PL + CW * 0.5 + 2, CW * 0.5 - 2, Y);
+    Y += GAP;
 
-    // Nat. Operação | Data
-    campo('NAT. DA OPERAÇÃO', d.natOperacao || '', ml, cw * 0.65 - 4, y);
-    campo('DATA DA EMISSÃO', d.dataEmissao || '', ml + cw * 0.65 + 2, cw * 0.35 - 4, y);
-    y += gap + 2;
+    campo('NAT. DA OPERACAO', d.natOperacao || '', PL, CW * 0.62, Y);
+    campo('DATA DA EMISSAO',  d.dataEmissao || '', PL + CW * 0.64 + 2, CW * 0.36 - 2, Y);
+    Y += GAP + 4;
 
-    // ── tabela ──
-    const rows = d.itens.map(it => [
-      it.quant % 1 === 0 ? String(Math.floor(it.quant)) : String(it.quant).replace('.', ','),
-      it.desc,
+    // ── Tabela ──
+    const linhas = d.itens.map(it => [
+      it.quant % 1 === 0 ? String(Math.floor(it.quant)) : String(it.quant),
+      it.desc || '',
       'R$ ' + it.unit.toFixed(2).replace('.', ','),
       'R$ ' + it.total.toFixed(2).replace('.', ','),
     ]);
-
-    // preenche linhas em branco até pelo menos 8
-    while (rows.length < 8) rows.push(['', '', '', '']);
+    while (linhas.length < 9) linhas.push(['', '', '', '']);
 
     doc.autoTable({
-      startY: y,
-      margin: { left: ml - 2, right: mr - 2 },
-      head: [['Quant.', 'Discriminação do Serviço', 'Unitário', 'TOTAL R$']],
-      body: rows,
+      startY: Y,
+      margin: { left: PL - 3, right: PR - 3 },
+      head: [['Quant.', 'Discriminacao do Servico', 'Unitario', 'TOTAL R$']],
+      body: linhas,
       theme: 'grid',
       headStyles: {
-        fillColor: [0, 48, 135],
+        fillColor: [0, 51, 153],
         textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 8.5,
+        fontSize: 9,
         halign: 'left',
-        cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
+        cellPadding: { top: 3.5, bottom: 3.5, left: 4, right: 4 },
       },
       columnStyles: {
-        0: { cellWidth: 20, halign: 'center' },
-        1: { cellWidth: 'auto', halign: 'left' },
-        2: { cellWidth: 34, halign: 'right' },
-        3: { cellWidth: 34, halign: 'right', fontStyle: 'bold' },
+        0: { cellWidth: 22, halign: 'center' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 36, halign: 'right' },
+        3: { cellWidth: 36, halign: 'right', fontStyle: 'bold' },
       },
       bodyStyles: {
         fontSize: 9,
-        minCellHeight: 8,
-        textColor: [0, 0, 0],
-        cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
+        minCellHeight: 9,
+        textColor: [20, 20, 20],
+        cellPadding: { top: 2.5, bottom: 2.5, left: 4, right: 4 },
       },
-      tableLineColor: [0, 0, 0],
-      tableLineWidth: 0.25,
+      alternateRowStyles: { fillColor: [250, 251, 255] },
+      tableLineColor: [220, 220, 220],
+      tableLineWidth: 0.3,
     });
 
-    const tabelaFimY = doc.lastAutoTable.finalY;
+    const FIM_TAB = doc.lastAutoTable.finalY;
 
-    // linha após tabela
-    doc.setLineWidth(0.4);
-    doc.setDrawColor(0, 0, 0);
-    doc.line(ml - 2, tabelaFimY, W - mr + 2, tabelaFimY);
+    doc.setDrawColor(0, 51, 153);
+    doc.setLineWidth(0.5);
+    doc.line(PL - 3, FIM_TAB, W - PR + 3, FIM_TAB);
 
-    // ── TOTAL ──
-    const totalY = tabelaFimY + 10;
+    // ── Total ──
+    const TY = FIM_TAB + 11;
+
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
-    preto();
-    // 'TOTAL R
+    doc.setTextColor(20, 20, 20);
+    doc.text('TOTAL R$', W - PR - 70, TY);
 
-    // ── RODAPÉ ──
-    const rodapeY = 282;
+    const BOX_X = W - PR - 52;
+    const BOX_W = 50;
+    const BOX_H = 12;
+    doc.setFillColor(0, 51, 153);
+    doc.setDrawColor(0, 51, 153);
+    doc.roundedRect(BOX_X, TY - 8.5, BOX_W, BOX_H, 2, 2, 'FD');
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(12);
+    doc.setTextColor(255, 255, 255);
+    doc.text('R$ ' + d.total.toFixed(2).replace('.', ','),
+             BOX_X + BOX_W / 2, TY, { align: 'center' });
+
+    // ── Rodapé ──
+    doc.setDrawColor(220, 220, 220);
+    doc.setLineWidth(0.3);
+    doc.line(PL - 3, 280, W - PR + 3, 280);
 
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(7);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Gráfica Jocap – Fone: (51) 3470.4157', ml, rodapeY);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Grafica Jocap - Fone: (51) 3470.4157', PL, 285);
 
-    // linha assinatura (centro)
-    const assinX = W / 2 - 30;
-    doc.setDrawColor(0, 0, 0);
-    doc.setLineWidth(0.3);
-    doc.line(assinX, rodapeY, assinX + 60, rodapeY);
+    doc.setDrawColor(20, 20, 20);
+    doc.setLineWidth(0.4);
+    const AX = W / 2 - 28;
+    doc.line(AX, 284, AX + 56, 284);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    preto();
-    doc.text('Ciente', assinX + 30, rodapeY + 4, { align: 'center' });
+    doc.setTextColor(20, 20, 20);
+    doc.text('Ciente', AX + 28, 288.5, { align: 'center' });
 
-    // NÃO VALE COMO NOTA FISCAL
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    preto();
-    doc.text('NÃO VALE COMO NOTA FISCAL', W - mr, rodapeY + 4, { align: 'right' });
+    doc.setFontSize(8.5);
+    doc.setTextColor(20, 20, 20);
+    doc.text('NAO VALE COMO NOTA FISCAL', W - PR, 285, { align: 'right' });
 
-    doc.save('Recibo_' + d.numero + '_' + (d.nomeFirma || 'cliente').replace(/s+/g, '_') + '.pdf');
+    // ── Download ──
+    const nome = 'Recibo_' + d.numero + '_' +
+                 (d.nomeFirma || 'cliente').replace(/[^a-zA-Z0-9]/g, '_') + '.pdf';
+    doc.save(nome);
   }
 
   // ── Helpers ─────────────────────────────────────────────────
