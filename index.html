@@ -518,188 +518,204 @@
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
-    const W = 210, ml = 14, mr = 14, cw = W - ml - mr;
+    const W = 210, H = 297;
+    const ml = 12, mr = 12;
+    const cw = W - ml - mr;
 
-    // ── Borda geral ──
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.5);
-    doc.rect(ml - 2, 10, cw + 4, 272);
+    // ── helpers de cor ──
+    const preto  = () => doc.setTextColor(0, 0, 0);
+    const cinza  = () => doc.setTextColor(100, 100, 100);
+    const vermelho = () => doc.setTextColor(192, 57, 43);
 
-    // ── Cabeçalho ──
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.3);
+    // ── borda geral ──
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.6);
+    doc.rect(ml - 2, 10, cw + 4, 275);
 
-    // Caixa do logo (esquerda)
+    // ── caixa da logo ──
+    doc.setLineWidth(0.4);
     doc.rect(ml - 2, 10, 46, 28);
+    doc.addImage(LOGO_B64, 'PNG', ml - 1, 11, 44, 26);
 
-    // Logo imagem
-    doc.addImage(LOGO_B64, 'PNG', ml - 1, 11, 44, 25);
-
-    // Dados empresa (direita)
-    doc.setTextColor(0, 0, 0);
+    // ── dados da empresa ──
+    preto();
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9);
-    doc.text('Rogério Lopes Espíndola e Cia Ltda.', W - mr, 16, { align: 'right' });
+    doc.setFontSize(9.5);
+    doc.text('Rogério Lopes Espíndola e Cia Ltda.', W - mr, 17, { align: 'right' });
+
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.text('Rua Carlos Estevão, 333/105 – Jardim Leopoldina', W - mr, 20.5, { align: 'right' });
-    doc.text('Porto Alegre – RS – CEP 91240-001', W - mr, 24.5, { align: 'right' });
-    doc.text('Fone: (51) 99823.8670  |  nene_poa@hotmail.com', W - mr, 28.5, { align: 'right' });
+    doc.setFontSize(8);
+    preto();
+    doc.text('Rua Carlos Estevão, 333/105 – Jardim Leopoldina', W - mr, 22, { align: 'right' });
+    doc.text('Porto Alegre – RS – CEP 91240-001', W - mr, 26.5, { align: 'right' });
+    doc.text('Fone: (51) 99823.8670  |  nene_poa@hotmail.com', W - mr, 31, { align: 'right' });
 
-    // Linha separando cabeçalho
+    // ── linha separadora ──
+    doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.3);
-    doc.line(ml - 2, 38, W - mr + 2, 38);
+    doc.line(ml - 2, 38.5, W - mr + 2, 38.5);
 
-    // CNPJ e Insc Municipal
+    // ── CNPJ e Insc Municipal ──
+    doc.setFont('helvetica', 'bold');
     doc.setFontSize(7);
+    preto();
+    doc.text('CNPJ (MF) Nº 18.541.800/0001-85', ml, 43.5);
+    doc.text('Insc. Municipal Nº 558.998.2.0', W - mr, 43.5, { align: 'right' });
+
+    doc.line(ml - 2, 46.5, W - mr + 2, 46.5);
+
+    // ── RECIBO Nº ──
     doc.setFont('helvetica', 'bold');
-    doc.text('CNPJ (MF) Nº 18.541.800/0001-85', ml, 43);
-    doc.text('Insc. Municipal Nº 558.998.2.0', W - mr, 43, { align: 'right' });
+    doc.setFontSize(24);
+    preto();
+    doc.text('RECIBO', W / 2 - 10, 56, { align: 'center' });
 
-    doc.line(ml - 2, 45, W - mr + 2, 45);
+    doc.setFontSize(13);
+    preto();
+    doc.text('Nº', W / 2 + 20, 56);
 
-    // ── RECIBO + Número ──
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
-    doc.setTextColor(0, 0, 0);
-    doc.text('RECIBO', W / 2, 54, { align: 'center' });
+    vermelho();
+    doc.setFontSize(24);
+    doc.text(String(d.numero), W / 2 + 32, 56);
 
-    doc.setFontSize(11);
-    doc.text('Nº', W / 2 + 20, 54);
-    doc.setTextColor(192, 57, 43);
-    doc.setFontSize(18);
-    doc.text(String(d.numero), W / 2 + 30, 54);
-    doc.setTextColor(0, 0, 0);
+    preto();
+    doc.setLineWidth(0.3);
+    doc.line(ml - 2, 60, W - mr + 2, 60);
 
-    doc.line(ml - 2, 58, W - mr + 2, 58);
-
-    // ── Campos ──
-    let y = 65;
-    const labelSize = 7;
-    const valSize   = 10;
-    const lineH     = 7;
-
-    function campo(label, valor, x, w, yy) {
+    // ── campos ──
+    function campo(label, valor, x, w, y) {
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(labelSize);
-      doc.setTextColor(80, 80, 80);
-      doc.text(label, x, yy - 1);
+      doc.setFontSize(6.5);
+      cinza();
+      doc.text(label, x, y);
+
       doc.setFont('helvetica', 'normal');
-      doc.setFontSize(valSize);
-      doc.setTextColor(0, 0, 0);
-      doc.text(valor || '', x, yy + 4);
-      doc.setDrawColor(150);
+      doc.setFontSize(10);
+      preto();
+      doc.text((valor || ''), x, y + 5);
+
+      doc.setDrawColor(180, 180, 180);
       doc.setLineWidth(0.2);
-      doc.line(x, yy + 5.5, x + w, yy + 5.5);
-      doc.setDrawColor(0);
+      doc.line(x, y + 6.5, x + w, y + 6.5);
+      doc.setDrawColor(0, 0, 0);
     }
 
+    let y = 67;
+    const gap = 13;
+
     // Nome ou Firma
-    campo('NOME OU FIRMA', d.nomeFirma.toUpperCase(), ml, cw, y);
-    y += lineH + 4;
+    campo('NOME OU FIRMA', (d.nomeFirma || '').toUpperCase(), ml, cw, y);
+    y += gap;
 
     // Endereço
-    campo('ENDEREÇO', d.endereco.toUpperCase(), ml, cw, y);
-    y += lineH + 4;
+    campo('ENDEREÇO', (d.endereco || '').toUpperCase(), ml, cw, y);
+    y += gap;
 
     // Município | Estado | Insc. Mun.
-    campo('MUNICÍPIO', d.municipio.toUpperCase(), ml, cw * 0.45, y);
-    campo('ESTADO', d.estado, ml + cw * 0.47, 18, y);
-    campo('INSC. MUN.', d.inscMun, ml + cw * 0.47 + 22, cw * 0.35, y);
-    y += lineH + 4;
+    const w1 = cw * 0.50, w2 = 20, w3 = cw - w1 - w2 - 10;
+    campo('MUNICÍPIO',  (d.municipio || '').toUpperCase(), ml, w1 - 4, y);
+    campo('ESTADO',     (d.estado || '').toUpperCase(), ml + w1, w2, y);
+    campo('INSC. MUN.', d.inscMun || '', ml + w1 + w2 + 6, w3, y);
+    y += gap;
 
     // CNPJ | Insc. Est.
-    campo('CNPJ / CPF', d.cnpj, ml, cw * 0.5, y);
-    campo('INSC. EST.', d.inscEst, ml + cw * 0.52, cw * 0.48, y);
-    y += lineH + 4;
+    campo('CNPJ / CPF', d.cnpj || '', ml, cw * 0.5 - 4, y);
+    campo('INSC. EST.', d.inscEst || '', ml + cw * 0.5 + 2, cw * 0.5 - 4, y);
+    y += gap;
 
     // Nat. Operação | Data
-    campo('NAT. DA OPERAÇÃO', d.natOperacao, ml, cw * 0.6, y);
-    campo('DATA DA EMISSÃO', d.dataEmissao, ml + cw * 0.62, cw * 0.38, y);
-    y += lineH + 8;
+    campo('NAT. DA OPERAÇÃO', d.natOperacao || '', ml, cw * 0.65 - 4, y);
+    campo('DATA DA EMISSÃO', d.dataEmissao || '', ml + cw * 0.65 + 2, cw * 0.35 - 4, y);
+    y += gap + 2;
 
-    // ── Tabela de serviços ──
-    const tableRows = d.itens.map(it => [
-      String(it.quant).replace('.', ','),
+    // ── tabela ──
+    const rows = d.itens.map(it => [
+      it.quant % 1 === 0 ? String(Math.floor(it.quant)) : String(it.quant).replace('.', ','),
       it.desc,
       'R$ ' + it.unit.toFixed(2).replace('.', ','),
       'R$ ' + it.total.toFixed(2).replace('.', ','),
     ]);
 
+    // preenche linhas em branco até pelo menos 8
+    while (rows.length < 8) rows.push(['', '', '', '']);
+
     doc.autoTable({
       startY: y,
       margin: { left: ml - 2, right: mr - 2 },
       head: [['Quant.', 'Discriminação do Serviço', 'Unitário', 'TOTAL R$']],
-      body: tableRows,
+      body: rows,
       theme: 'grid',
       headStyles: {
         fillColor: [0, 48, 135],
-        textColor: 255,
+        textColor: [255, 255, 255],
         fontStyle: 'bold',
-        fontSize: 8,
+        fontSize: 8.5,
         halign: 'left',
+        cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
       },
       columnStyles: {
-        0: { cellWidth: 18, halign: 'center' },
-        1: { cellWidth: 'auto' },
-        2: { cellWidth: 32, halign: 'right' },
-        3: { cellWidth: 32, halign: 'right', fontStyle: 'bold' },
+        0: { cellWidth: 20, halign: 'center' },
+        1: { cellWidth: 'auto', halign: 'left' },
+        2: { cellWidth: 34, halign: 'right' },
+        3: { cellWidth: 34, halign: 'right', fontStyle: 'bold' },
       },
-      bodyStyles: { fontSize: 9, minCellHeight: 8 },
-      // Preenche linhas em branco até pelo menos 10 linhas
-      didDrawPage: () => {},
-      willDrawCell: (data) => {
-        // sem customização extra
+      bodyStyles: {
+        fontSize: 9,
+        minCellHeight: 8,
+        textColor: [0, 0, 0],
+        cellPadding: { top: 2, bottom: 2, left: 3, right: 3 },
       },
+      tableLineColor: [0, 0, 0],
+      tableLineWidth: 0.25,
     });
 
-    // Força pelo menos 8 linhas em branco extras se a tabela for pequena
-    const afterTable = doc.lastAutoTable.finalY;
+    const tabelaFimY = doc.lastAutoTable.finalY;
 
-    // Linha gráfica
-    doc.setLineWidth(0.5);
-    doc.setDrawColor(0);
-    doc.line(ml - 2, afterTable, W - mr + 2, afterTable);
+    // linha após tabela
+    doc.setLineWidth(0.4);
+    doc.setDrawColor(0, 0, 0);
+    doc.line(ml - 2, tabelaFimY, W - mr + 2, tabelaFimY);
 
     // ── TOTAL ──
-    const totalY = afterTable + 10;
+    const totalY = tabelaFimY + 9;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(11);
-    doc.text('TOTAL R$', W - mr - 55, totalY);
-
-    // Caixa do total
-    doc.setDrawColor(0);
-    doc.setLineWidth(0.8);
-    doc.roundedRect(W - mr - 45, totalY - 6, 43, 10, 2, 2);
     doc.setFontSize(12);
-    const totalStr = 'R$ ' + d.total.toFixed(2).replace('.', ',');
-    doc.text(totalStr, W - mr - 3, totalY, { align: 'right' });
+    preto();
+    doc.text('TOTAL R$', W - mr - 62, totalY);
 
-    // ── Rodapé ──
-    const footY = 272;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.7);
+    doc.roundedRect(W - mr - 48, totalY - 7, 46, 11, 2, 2);
+
+    doc.setFontSize(12);
+    preto();
+    doc.text('R$ ' + d.total.toFixed(2).replace('.', ','), W - mr - 2, totalY, { align: 'right' });
+
+    // ── RODAPÉ ──
+    const rodapeY = 282;
+
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(7.5);
-    doc.setTextColor(80, 80, 80);
-    doc.text('Gráfica Jocap – Fone: (51) 3470.4157', ml, footY + 6);
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Gráfica Jocap – Fone: (51) 3470.4157', ml, rodapeY);
 
-    // Linha assinatura
-    const assinY = footY + 4;
+    // linha assinatura (centro)
+    const assinX = W / 2 - 30;
+    doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.3);
-    doc.setDrawColor(0);
-    doc.line(ml, assinY, ml + 60, assinY);
+    doc.line(assinX, rodapeY, assinX + 60, rodapeY);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
-    doc.setTextColor(0);
-    doc.text('Ciente', ml + 25, assinY + 4, { align: 'center' });
+    preto();
+    doc.text('Ciente', assinX + 30, rodapeY + 4, { align: 'center' });
 
     // NÃO VALE COMO NOTA FISCAL
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
-    doc.setTextColor(0, 0, 0);
-    doc.text('NÃO VALE COMO NOTA FISCAL', W - mr, assinY + 4, { align: 'right' });
+    preto();
+    doc.text('NÃO VALE COMO NOTA FISCAL', W - mr, rodapeY + 4, { align: 'right' });
 
-    // ── Download ──
-    doc.save(`Recibo_${d.numero}_${(d.nomeFirma || 'cliente').replace(/\s+/g, '_')}.pdf`);
+    doc.save('Recibo_' + d.numero + '_' + (d.nomeFirma || 'cliente').replace(/s+/g, '_') + '.pdf');
   }
 
   // ── Helpers ─────────────────────────────────────────────────
