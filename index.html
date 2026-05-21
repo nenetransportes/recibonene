@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gerador de Recibos – Nene Transportes</title>
+
+  <!-- jsPDF + AutoTable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <!-- Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 32px 16px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,.10);
+      width: 100%;
+      max-width: 760px;
+      padding: 36px 40px 40px;
+    }
+
+    /* ── Cabeçalho ── */
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+    .logo-wrap img {
+      height: 72px;
+      object-fit: contain;
+    }
+    .logo-wrap .logo-fallback {
+      font-size: 28px;
+      font-weight: 900;
+      color: #003087;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+    .logo-wrap .logo-sub {
+      font-size: 10px;
+      color: #555;
+      letter-spacing: .5px;
+    }
+    .company-info {
+      flex: 1;
+      text-align: right;
+      font-size: 12px;
+      color: #222;
+      line-height: 1.7;
+    }
+    .company-info strong {
+      font-size: 14px;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+    .company-info .cnpj-line {
+      margin-top: 6px;
+      font-size: 11px;
+      color: #555;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    h1.titulo {
+      text-align: center;
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: 6px;
+      color: #111;
+      margin-bottom: 4px;
+    }
+    .numero-recibo {
+      text-align: center;
+      font-size: 14px;
+      color: #333;
+      margin-bottom: 24px;
+    }
+    .numero-recibo span {
+      font-size: 20px;
+      font-weight: 700;
+      color: #c0392b;
+    }
+
+    /* ── Formulário ── */
+    .form-group { margin-bottom: 14px; }
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #555;
+      margin-bottom: 4px;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      border: none;
+      border-bottom: 1.5px solid #bbb;
+      padding: 6px 2px;
+      font-size: 14px;
+      color: #111;
+      background: transparent;
+      outline: none;
+      transition: border-color .2s;
+    }
+    .form-group input:focus, .form-group select:focus {
+      border-bottom-color: #003087;
+    }
+
+    .row { display: flex; gap: 16px; }
+    .row .form-group { flex: 1; }
+
+    /* ── Tabela de itens ── */
+    .section-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #003087;
+      border-bottom: 2px solid #003087;
+      padding-bottom: 4px;
+      margin: 24px 0 14px;
+    }
+
+    table.itens {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    table.itens thead th {
+      background: #003087;
+      color: #fff;
+      padding: 8px 10px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .4px;
+    }
+    table.itens thead th:last-child { text-align: right; }
+    table.itens tbody td {
+      border-bottom: 1px solid #e5e7eb;
+      padding: 6px 10px;
+      vertical-align: middle;
+    }
+    table.itens tbody td:last-child { text-align: right; }
+    table.itens input {
+      border: none;
+      background: transparent;
+      font-size: 13px;
+      width: 100%;
+      outline: none;
+      color: #111;
+      padding: 2px 0;
+    }
+    table.itens input:focus { border-bottom: 1px solid #003087; }
+    table.itens .col-quant { width: 70px; }
+    table.itens .col-unit  { width: 110px; }
+    table.itens .col-total { width: 110px; }
+    table.itens .btn-del {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #e74c3c;
+      font-size: 18px;
+      line-height: 1;
+      padding: 0 4px;
+    }
+
+    .btn-add-item {
+      margin-top: 10px;
+      background: none;
+      border: 1.5px dashed #003087;
+      color: #003087;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 18px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .btn-add-item:hover { background: #eef2fb; }
+
+    /* ── Total ── */
+    .total-wrap {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 14px;
+      margin-top: 18px;
+      font-size: 15px;
+      font-weight: 700;
+    }
+    .total-wrap .valor {
+      background: #fff3cd;
+      border: 1.5px solid #e0b400;
+      border-radius: 6px;
+      padding: 6px 18px;
+      font-size: 18px;
+      color: #111;
+      min-width: 140px;
+      text-align: right;
+    }
+
+    /* ── Botão gerar ── */
+    .btn-gerar {
+      display: block;
+      width: 100%;
+      margin-top: 32px;
+      background: #003087;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      padding: 14px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn-gerar:hover { background: #00256a; }
+    .btn-gerar:disabled { background: #888; cursor: not-allowed; }
+
+    /* ── Status ── */
+    #status {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 13px;
+      color: #27ae60;
+      min-height: 20px;
+    }
+    #status.erro { color: #e74c3c; }
+
+    /* ── Rodapé ── */
+    footer {
+      margin-top: 32px;
+      font-size: 11px;
+      color: #aaa;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- Cabeçalho -->
+  <div class="header">
+    <div class="logo-wrap">
+      <div class="logo-fallback">Nene</div>
+      <div class="logo-sub">Transportes Cinematográfico</div>
+    </div>
+    <div class="company-info">
+      <strong>Rogério Lopes Espíndola e Cia Ltda.</strong><br>
+      Rua Carlos Estevão, 333/105 – Jardim Leopoldina<br>
+      Porto Alegre – RS – CEP 91240-001<br>
+      Fone: (51) 99823.8670 &nbsp;|&nbsp; nene_poa@hotmail.com
+      <div class="cnpj-line">
+        <span>CNPJ (MF) Nº 18.541.800/0001-85</span>
+        <span>Insc. Municipal Nº 558.998.2.0</span>
+      </div>
+    </div>
+  </div>
+
+  <h1 class="titulo">RECIBO</h1>
+  <div class="numero-recibo">Nº <span id="exibeNumero">...</span></div>
+
+  <!-- Dados do cliente -->
+  <div class="form-group">
+    <label>Nome ou Firma</label>
+    <input type="text" id="nomeFirma" placeholder="Nome completo ou razão social" />
+  </div>
+
+  <div class="form-group">
+    <label>Endereço</label>
+    <input type="text" id="endereco" placeholder="Rua, número, complemento" />
+  </div>
+
+  <div class="row">
+    <div class="form-group">
+      <label>Município</label>
+      <input type="text" id="municipio" placeholder="Cidade" />
+    </div>
+    <div class="form-group" style="max-width:90px">
+      <label>Estado</label>
+      <input type="text" id="estado" placeholder="UF" maxlength="2" style="text-transform:uppercase" />
+    </div>
+    <div class="form-group">
+      <label>Insc. Municipal</label>
+      <input type="text" id="inscMun" placeholder="Inscrição Municipal" />
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="form-group">
+      <label>CNPJ / CPF</label>
+      <input type="text" id="cnpj" placeholder="00.000.000/0000-00" />
+    </div>
+    <div class="form-group">
+      <label>Insc. Estadual</label>
+      <input type="text" id="inscEst" placeholder="Inscrição Estadual" />
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="form-group">
+      <label>Nat. da Operação</label>
+      <input type="text" id="natOperacao" placeholder="Natureza da operação" />
+    </div>
+    <div class="form-group" style="max-width:180px">
+      <label>Data da Emissão</label>
+      <input type="date" id="dataEmissao" />
+    </div>
+  </div>
+
+  <!-- Itens / Serviços -->
+  <div class="section-title">Discriminação dos Serviços</div>
+
+  <table class="itens" id="tabelaItens">
+    <thead>
+      <tr>
+        <th class="col-quant">Quant.</th>
+        <th>Discriminação do Serviço</th>
+        <th class="col-unit">Unitário (R$)</th>
+        <th class="col-total">Total R$</th>
+        <th style="width:36px"></th>
+      </tr>
+    </thead>
+    <tbody id="corpoItens">
+      <!-- linhas adicionadas via JS -->
+    </tbody>
+  </table>
+
+  <button class="btn-add-item" id="btnAddItem">+ Adicionar item</button>
+
+  <!-- Total geral -->
+  <div class="total-wrap">
+    <span>TOTAL R$</span>
+    <div class="valor" id="exibeTotal">R$ 0,00</div>
+  </div>
+
+  <!-- Ação -->
+  <button class="btn-gerar" id="btnGerar">Gerar Recibo em PDF</button>
+  <div id="status"></div>
+
+</div>
+
+<footer>Nene Transportes Cinematográfico &mdash; Sistema de Recibos</footer>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     CONFIGURAÇÃO SUPABASE
+     Preencha SUPABASE_URL e SUPABASE_ANON_KEY abaixo.
+     Encontre a anon key em: Supabase Dashboard → Project Settings → API
+  ═══════════════════════════════════════════════════════════════ -->
+<script>
+  const SUPABASE_URL      = 'https://iroovzuhrqggcjwoougd.supabase.co';
+  const SUPABASE_ANON_KEY = 'COLE_SUA_ANON_KEY_AQUI'; // ← único campo a preencher
+
+  // ─────────────────────────────────────────────────────────────
+  const { createClient } = supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ── Estado global ────────────────────────────────────────────
+  let proximoNumero = 752; // fallback local
+
+  // ── Inicialização ────────────────────────────────────────────
+  async function init() {
+    // Data de hoje como padrão
+    document.getElementById('dataEmissao').valueAsDate = new Date();
+
+    // Busca o próximo número no Supabase
+    await carregarProximoNumero();
+
+    // Primeira linha de item
+    addItem();
+  }
+
+  async function carregarProximoNumero() {
+    try {
+      const { data, error } = await sb
+        .from('recibos')
+        .select('numero')
+        .order('numero', { ascending: false })
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        proximoNumero = data[0].numero + 1;
+      }
+    } catch(e) {
+      console.warn('Supabase não configurado, usando numeração local.', e);
+    }
+    document.getElementById('exibeNumero').textContent = proximoNumero;
+  }
+
+  // ── Itens da tabela ─────────────────────────────────────────
+  let itemCount = 0;
+
+  function addItem() {
+    itemCount++;
+    const tbody = document.getElementById('corpoItens');
+    const tr = document.createElement('tr');
+    tr.dataset.id = itemCount;
+    tr.innerHTML = `
+      <td class="col-quant">
+        <input type="number" min="0" step="0.01" value="1"
+          class="inp-quant" data-row="${itemCount}"
+          oninput="recalcRow(${itemCount})" />
+      </td>
+      <td>
+        <input type="text" class="inp-desc" data-row="${itemCount}"
+          placeholder="Descrição do serviço" />
+      </td>
+      <td class="col-unit">
+        <input type="number" min="0" step="0.01" value="0"
+          class="inp-unit" data-row="${itemCount}"
+          oninput="recalcRow(${itemCount})" />
+      </td>
+      <td class="col-total">
+        <span class="span-total" data-row="${itemCount}">R$ 0,00</span>
+      </td>
+      <td>
+        <button class="btn-del" onclick="delItem(${itemCount})" title="Remover">×</button>
+      </td>`;
+    tbody.appendChild(tr);
+  }
+
+  function delItem(id) {
+    const tr = document.querySelector(`tr[data-id="${id}"]`);
+    if (tr) tr.remove();
+    recalcTotal();
+  }
+
+  function recalcRow(id) {
+    const q = parseFloat(document.querySelector(`.inp-quant[data-row="${id}"]`)?.value) || 0;
+    const u = parseFloat(document.querySelector(`.inp-unit[data-row="${id}"]`)?.value) || 0;
+    const t = q * u;
+    const span = document.querySelector(`.span-total[data-row="${id}"]`);
+    if (span) span.textContent = 'R$ ' + t.toFixed(2).replace('.', ',');
+    recalcTotal();
+  }
+
+  function recalcTotal() {
+    let total = 0;
+    document.querySelectorAll('.span-total').forEach(s => {
+      const v = parseFloat(s.textContent.replace('R$ ', '').replace(',', '.')) || 0;
+      total += v;
+    });
+    document.getElementById('exibeTotal').textContent =
+      'R$ ' + total.toFixed(2).replace('.', ',');
+    return total;
+  }
+
+  function getItens() {
+    const rows = document.querySelectorAll('#corpoItens tr');
+    return Array.from(rows).map(tr => {
+      const id = tr.dataset.id;
+      return {
+        quant:  parseFloat(document.querySelector(`.inp-quant[data-row="${id}"]`)?.value) || 0,
+        desc:   document.querySelector(`.inp-desc[data-row="${id}"]`)?.value || '',
+        unit:   parseFloat(document.querySelector(`.inp-unit[data-row="${id}"]`)?.value) || 0,
+        total:  parseFloat((document.querySelector(`.span-total[data-row="${id}"]`)?.textContent || '0')
+                  .replace('R$ ', '').replace(',', '.')) || 0,
+      };
+    });
+  }
+
+  // ── Gerar PDF ────────────────────────────────────────────────
+  document.getElementById('btnGerar').addEventListener('click', async () => {
+    const btn = document.getElementById('btnGerar');
+    const status = document.getElementById('status');
+    btn.disabled = true;
+    status.className = '';
+    status.textContent = 'Gerando PDF...';
+
+    const dados = {
+      numero:      proximoNumero,
+      nomeFirma:   document.getElementById('nomeFirma').value.trim(),
+      endereco:    document.getElementById('endereco').value.trim(),
+      municipio:   document.getElementById('municipio').value.trim(),
+      estado:      document.getElementById('estado').value.trim().toUpperCase(),
+      inscMun:     document.getElementById('inscMun').value.trim(),
+      cnpj:        document.getElementById('cnpj').value.trim(),
+      inscEst:     document.getElementById('inscEst').value.trim(),
+      natOperacao: document.getElementById('natOperacao').value.trim(),
+      dataEmissao: formatarData(document.getElementById('dataEmissao').value),
+      itens:       getItens(),
+      total:       recalcTotal(),
+    };
+
+    if (!dados.nomeFirma) {
+      status.className = 'erro';
+      status.textContent = '⚠ Preencha o Nome ou Firma.';
+      btn.disabled = false;
+      return;
+    }
+
+    try {
+      gerarPDF(dados);
+
+      // Salva no Supabase
+      await salvarNoSupabase(dados);
+
+      // Avança o número local
+      proximoNumero++;
+      document.getElementById('exibeNumero').textContent = proximoNumero;
+
+      status.textContent = `✓ Recibo Nº ${dados.numero} gerado e salvo com sucesso!`;
+    } catch(e) {
+      console.error(e);
+      status.className = 'erro';
+      status.textContent = '⚠ Erro ao gerar/salvar. PDF gerado localmente.';
+    }
+
+    btn.disabled = false;
+  });
+
+  async function salvarNoSupabase(d) {
+    const { error } = await sb.from('recibos').insert({
+      numero:       d.numero,
+      nome_firma:   d.nomeFirma,
+      endereco:     d.endereco,
+      municipio:    d.municipio,
+      estado:       d.estado,
+      insc_mun:     d.inscMun,
+      cnpj:         d.cnpj,
+      insc_est:     d.inscEst,
+      nat_operacao: d.natOperacao,
+      data_emissao: d.dataEmissao,
+      itens:        d.itens,
+      total:        d.total,
+    });
+    if (error) throw error;
+  }
+
+  // ── Renderizar PDF ───────────────────────────────────────────
+  function gerarPDF(d) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+    const W = 210, ml = 14, mr = 14, cw = W - ml - mr;
+
+    // ── Borda geral ──
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.rect(ml - 2, 10, cw + 4, 272);
+
+    // ── Cabeçalho ──
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.3);
+
+    // Caixa do logo (esquerda)
+    doc.rect(ml - 2, 10, 46, 28);
+
+    // Logo texto
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(0, 48, 135);
+    doc.text('Nene', ml + 1, 23);
+    doc.setFontSize(7);
+    doc.setTextColor(80, 80, 80);
+    doc.setFont('helvetica', 'normal');
+    doc.text('Transportes Cinematográfico', ml + 1, 28);
+
+    // Dados empresa (direita)
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.text('Rogério Lopes Espíndola e Cia Ltda.', W - mr, 16, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.text('Rua Carlos Estevão, 333/105 – Jardim Leopoldina', W - mr, 20.5, { align: 'right' });
+    doc.text('Porto Alegre – RS – CEP 91240-001', W - mr, 24.5, { align: 'right' });
+    doc.text('Fone: (51) 99823.8670  |  nene_poa@hotmail.com', W - mr, 28.5, { align: 'right' });
+
+    // Linha separando cabeçalho
+    doc.setLineWidth(0.3);
+    doc.line(ml - 2, 38, W - mr + 2, 38);
+
+    // CNPJ e Insc Municipal
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text('CNPJ (MF) Nº 18.541.800/0001-85', ml, 43);
+    doc.text('Insc. Municipal Nº 558.998.2.0', W - mr, 43, { align: 'right' });
+
+    doc.line(ml - 2, 45, W - mr + 2, 45);
+
+    // ── RECIBO + Número ──
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(22);
+    doc.setTextColor(0, 0, 0);
+    doc.text('RECIBO', W / 2, 54, { align: 'center' });
+
+    doc.setFontSize(11);
+    doc.text('Nº', W / 2 + 20, 54);
+    doc.setTextColor(192, 57, 43);
+    doc.setFontSize(18);
+    doc.text(String(d.numero), W / 2 + 30, 54);
+    doc.setTextColor(0, 0, 0);
+
+    doc.line(ml - 2, 58, W - mr + 2, 58);
+
+    // ── Campos ──
+    let y = 65;
+    const labelSize = 7;
+    const valSize   = 10;
+    const lineH     = 7;
+
+    function campo(label, valor, x, w, yy) {
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(labelSize);
+      doc.setTextColor(80, 80, 80);
+      doc.text(label, x, yy - 1);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(valSize);
+      doc.setTextColor(0, 0, 0);
+      doc.text(valor || '', x, yy + 4);
+      doc.setDrawColor(150);
+      doc.setLineWidth(0.2);
+      doc.line(x, yy + 5.5, x + w, yy + 5.5);
+      doc.setDrawColor(0);
+    }
+
+    // Nome ou Firma
+    campo('NOME OU FIRMA', d.nomeFirma.toUpperCase(), ml, cw, y);
+    y += lineH + 4;
+
+    // Endereço
+    campo('ENDEREÇO', d.endereco.toUpperCase(), ml, cw, y);
+    y += lineH + 4;
+
+    // Município | Estado | Insc. Mun.
+    campo('MUNICÍPIO', d.municipio.toUpperCase(), ml, cw * 0.45, y);
+    campo('ESTADO', d.estado, ml + cw * 0.47, 18, y);
+    campo('INSC. MUN.', d.inscMun, ml + cw * 0.47 + 22, cw * 0.35, y);
+    y += lineH + 4;
+
+    // CNPJ | Insc. Est.
+    campo('CNPJ / CPF', d.cnpj, ml, cw * 0.5, y);
+    campo('INSC. EST.', d.inscEst, ml + cw * 0.52, cw * 0.48, y);
+    y += lineH + 4;
+
+    // Nat. Operação | Data
+    campo('NAT. DA OPERAÇÃO', d.natOperacao, ml, cw * 0.6, y);
+    campo('DATA DA EMISSÃO', d.dataEmissao, ml + cw * 0.62, cw * 0.38, y);
+    y += lineH + 8;
+
+    // ── Tabela de serviços ──
+    const tableRows = d.itens.map(it => [
+      String(it.quant).replace('.', ','),
+      it.desc,
+      'R$ ' + it.unit.toFixed(2).replace('.', ','),
+      'R$ ' + it.total.toFixed(2).replace('.', ','),
+    ]);
+
+    doc.autoTable({
+      startY: y,
+      margin: { left: ml - 2, right: mr - 2 },
+      head: [['Quant.', 'Discriminação do Serviço', 'Unitário', 'TOTAL R$']],
+      body: tableRows,
+      theme: 'grid',
+      headStyles: {
+        fillColor: [0, 48, 135],
+        textColor: 255,
+        fontStyle: 'bold',
+        fontSize: 8,
+        halign: 'left',
+      },
+      columnStyles: {
+        0: { cellWidth: 18, halign: 'center' },
+        1: { cellWidth: 'auto' },
+        2: { cellWidth: 32, halign: 'right' },
+        3: { cellWidth: 32, halign: 'right', fontStyle: 'bold' },
+      },
+      bodyStyles: { fontSize: 9, minCellHeight: 8 },
+      // Preenche linhas em branco até pelo menos 10 linhas
+      didDrawPage: () => {},
+      willDrawCell: (data) => {
+        // sem customização extra
+      },
+    });
+
+    // Força pelo menos 8 linhas em branco extras se a tabela for pequena
+    const afterTable = doc.lastAutoTable.finalY;
+
+    // Linha gráfica
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(0);
+    doc.line(ml - 2, afterTable, W - mr + 2, afterTable);
+
+    // ── TOTAL ──
+    const totalY = afterTable + 10;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.text('TOTAL R$', W - mr - 55, totalY);
+
+    // Caixa do total
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.8);
+    doc.roundedRect(W - mr - 45, totalY - 6, 43, 10, 2, 2);
+    doc.setFontSize(12);
+    const totalStr = 'R$ ' + d.total.toFixed(2).replace('.', ',');
+    doc.text(totalStr, W - mr - 3, totalY, { align: 'right' });
+
+    // ── Rodapé ──
+    const footY = 272;
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(80, 80, 80);
+    doc.text('Gráfica Jocap – Fone: (51) 3470.4157', ml, footY + 6);
+
+    // Linha assinatura
+    const assinY = footY + 4;
+    doc.setLineWidth(0.3);
+    doc.setDrawColor(0);
+    doc.line(ml, assinY, ml + 60, assinY);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(0);
+    doc.text('Ciente', ml + 25, assinY + 4, { align: 'center' });
+
+    // NÃO VALE COMO NOTA FISCAL
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(0, 0, 0);
+    doc.text('NÃO VALE COMO NOTA FISCAL', W - mr, assinY + 4, { align: 'right' });
+
+    // ── Download ──
+    doc.save(`Recibo_${d.numero}_${(d.nomeFirma || 'cliente').replace(/\s+/g, '_')}.pdf`);
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────
+  function formatarData(iso) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  // ── Eventos ─────────────────────────────────────────────────
+  document.getElementById('btnAddItem').addEventListener('click', addItem);
+
+  // ── Iniciar ─────────────────────────────────────────────────
+  init();
+</script>
+</body>
+</html>
