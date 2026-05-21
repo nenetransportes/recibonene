@@ -535,20 +535,24 @@
     // ── caixa da logo ──
     doc.setLineWidth(0.4);
     doc.rect(ml - 2, 10, 46, 28);
-    doc.addImage(LOGO_B64, 'PNG', ml - 1, 11, 44, 26);
+    // logo proporção 250x104px (ratio 2.404): largura=42mm, altura=42/2.404=17.5mm, centralizada na caixa 28mm
+    const logoH = 42 / 2.404;
+    const logoY = 10 + (28 - logoH) / 2;
+    doc.addImage(LOGO_B64, 'PNG', ml, logoY, 42, logoH);
 
-    // ── dados da empresa ──
+    // ── dados da empresa (centralizados na metade direita do cabeçalho) ──
+    const empX = ml + 44 + (W - mr - ml - 44) / 2; // centro da área direita
     preto();
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(9.5);
-    doc.text('Rogério Lopes Espíndola e Cia Ltda.', W - mr, 17, { align: 'right' });
+    doc.setFontSize(10.5);
+    doc.text('Rogério Lopes Espíndola e Cia Ltda.', empX, 17.5, { align: 'center' });
 
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
+    doc.setFontSize(8.5);
     preto();
-    doc.text('Rua Carlos Estevão, 333/105 – Jardim Leopoldina', W - mr, 22, { align: 'right' });
-    doc.text('Porto Alegre – RS – CEP 91240-001', W - mr, 26.5, { align: 'right' });
-    doc.text('Fone: (51) 99823.8670  |  nene_poa@hotmail.com', W - mr, 31, { align: 'right' });
+    doc.text('Rua Carlos Estevão, 333/105 – Jardim Leopoldina', empX, 22.5, { align: 'center' });
+    doc.text('Porto Alegre – RS – CEP 91240-001', empX, 27, { align: 'center' });
+    doc.text('Fone: (51) 99823.8670  |  nene_poa@hotmail.com', empX, 31.5, { align: 'center' });
 
     // ── linha separadora ──
     doc.setDrawColor(0, 0, 0);
@@ -677,19 +681,112 @@
     doc.line(ml - 2, tabelaFimY, W - mr + 2, tabelaFimY);
 
     // ── TOTAL ──
-    const totalY = tabelaFimY + 9;
+    const totalY = tabelaFimY + 10;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     preto();
-    doc.text('TOTAL R$', W - mr - 62, totalY);
+    // 'TOTAL R
 
+    // ── RODAPÉ ──
+    const rodapeY = 282;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Gráfica Jocap – Fone: (51) 3470.4157', ml, rodapeY);
+
+    // linha assinatura (centro)
+    const assinX = W / 2 - 30;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.3);
+    doc.line(assinX, rodapeY, assinX + 60, rodapeY);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    preto();
+    doc.text('Ciente', assinX + 30, rodapeY + 4, { align: 'center' });
+
+    // NÃO VALE COMO NOTA FISCAL
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    preto();
+    doc.text('NÃO VALE COMO NOTA FISCAL', W - mr, rodapeY + 4, { align: 'right' });
+
+    doc.save('Recibo_' + d.numero + '_' + (d.nomeFirma || 'cliente').replace(/s+/g, '_') + '.pdf');
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────
+  function formatarData(iso) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  // ── Eventos ─────────────────────────────────────────────────
+  document.getElementById('btnAddItem').addEventListener('click', addItem);
+
+  // ── Iniciar ─────────────────────────────────────────────────
+  init();
+</script>
+</body>
+</html>
+ fora da caixa, à esquerda dela
+    doc.text('TOTAL R
+
+    // ── RODAPÉ ──
+    const rodapeY = 282;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Gráfica Jocap – Fone: (51) 3470.4157', ml, rodapeY);
+
+    // linha assinatura (centro)
+    const assinX = W / 2 - 30;
+    doc.setDrawColor(0, 0, 0);
+    doc.setLineWidth(0.3);
+    doc.line(assinX, rodapeY, assinX + 60, rodapeY);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    preto();
+    doc.text('Ciente', assinX + 30, rodapeY + 4, { align: 'center' });
+
+    // NÃO VALE COMO NOTA FISCAL
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    preto();
+    doc.text('NÃO VALE COMO NOTA FISCAL', W - mr, rodapeY + 4, { align: 'right' });
+
+    doc.save('Recibo_' + d.numero + '_' + (d.nomeFirma || 'cliente').replace(/s+/g, '_') + '.pdf');
+  }
+
+  // ── Helpers ─────────────────────────────────────────────────
+  function formatarData(iso) {
+    if (!iso) return '';
+    const [y, m, d] = iso.split('-');
+    return `${d}/${m}/${y}`;
+  }
+
+  // ── Eventos ─────────────────────────────────────────────────
+  document.getElementById('btnAddItem').addEventListener('click', addItem);
+
+  // ── Iniciar ─────────────────────────────────────────────────
+  init();
+</script>
+</body>
+</html>
+, W - mr - 72, totalY);
+
+    // caixa do valor
+    const boxX = W - mr - 52;
+    const boxW = 50;
     doc.setDrawColor(0, 0, 0);
     doc.setLineWidth(0.7);
-    doc.roundedRect(W - mr - 48, totalY - 7, 46, 11, 2, 2);
+    doc.roundedRect(boxX, totalY - 7, boxW, 11, 2, 2);
 
+    // valor CENTRALIZADO dentro da caixa
     doc.setFontSize(12);
     preto();
-    doc.text('R$ ' + d.total.toFixed(2).replace('.', ','), W - mr - 2, totalY, { align: 'right' });
+    doc.text('R$ ' + d.total.toFixed(2).replace('.', ','), boxX + boxW / 2, totalY, { align: 'center' });
 
     // ── RODAPÉ ──
     const rodapeY = 282;
