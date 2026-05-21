@@ -303,21 +303,21 @@ function gerarPDF(d) {
   doc.setLineWidth(0.3);
   doc.line(ML - 4, 50, PW - MR + 4, 50);
 
-  // RECIBO No
+  // RECIBO (esquerda) + Nº número (direita)
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(28);
+  doc.setFontSize(20);
   doc.setTextColor(30, 30, 30);
-  doc.text('RECIBO', PW / 2 - 14, 62, { align: 'center' });
+  doc.text('RECIBO', ML, 61);
 
   doc.setFont('helvetica', 'normal');
-  doc.setFontSize(13);
+  doc.setFontSize(10);
   doc.setTextColor(180, 180, 180);
-  doc.text('No', PW / 2 + 18, 62);
+  doc.text('Nº', PW - MR - 28, 61, { align: 'right' });
 
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(28);
+  doc.setFontSize(20);
   doc.setTextColor(30, 30, 30);
-  doc.text(String(d.numero), PW / 2 + 28, 62);
+  doc.text(String(d.numero), PW - MR, 61, { align: 'right' });
 
   doc.setDrawColor(225, 225, 225);
   doc.setLineWidth(0.3);
@@ -338,8 +338,8 @@ function gerarPDF(d) {
     doc.line(x, y + 7, x + w, y + 7);
   }
 
-  let Y = 73;
-  const G = 13;
+  let Y = 71;
+  const G = 11;
 
   campo('NOME OU FIRMA', (d.nomeFirma || '').toUpperCase(), ML, CW, Y); Y += G;
   campo('ENDERECO', (d.endereco || '').toUpperCase(), ML, CW, Y); Y += G;
@@ -400,12 +400,12 @@ function gerarPDF(d) {
   doc.setLineWidth(0.3);
   doc.line(ML - 4, FY, PW - MR + 4, FY);
 
-  // Total
+  // Total — label à esquerda, caixa à direita sem sobreposição
   const TY = FY + 11;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(11);
   doc.setTextColor(30, 30, 30);
-  doc.text('TOTAL R$', PW - MR - 68, TY);
+  doc.text('TOTAL R$', ML, TY);
 
   const BX = PW - MR - 52, BW = 50, BH = 12;
   doc.setFillColor(30, 30, 30);
