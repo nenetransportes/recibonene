@@ -120,6 +120,8 @@ let itemCount = 0;
 // ── Init ─────────────────────────────────────────────────────
 async function init() {
   document.getElementById('dataEm').valueAsDate = new Date();
+  // keep-alive: INSERT no banco para evitar pausa automática do Supabase
+  fetch('/.netlify/functions/keepalive').catch(() => {});
   await carregarNumero();
   addItem();
 }
