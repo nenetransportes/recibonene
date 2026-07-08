@@ -64,7 +64,8 @@ footer{margin-top:32px;font-size:11px;color:#ccc;text-align:center}
       <div class="nome">Nenê Transportes Ltda.</div>
       <p>Rua Carlos Estevão, 333/105 – Jardim Leopoldina<br>
          Porto Alegre – RS – CEP 91240-001<br>
-         (51) 99823.8670 &nbsp;|&nbsp; nene_poa@hotmail.com</p>
+         (51) 99823.8670 &nbsp;|&nbsp; nene_poa@hotmail.com<br>
+         CNPJ 18.541.800/0001-85</p>
     </div>
   </div>
   <hr class="div"/>
